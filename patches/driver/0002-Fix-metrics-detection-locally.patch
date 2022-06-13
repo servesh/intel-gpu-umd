@@ -1,0 +1,25 @@
+From b96281983400b4e9b12d02388cef74f6c7d76c4e Mon Sep 17 00:00:00 2001
+From: Servesh Muralidharan <servesh@anl.gov>
+Date: Mon, 6 Jun 2022 17:03:10 -0500
+Subject: [PATCH 2/2] Fix metrics detection locally
+
+---
+ cmake/find_metrics.cmake | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/driver/intel-compute-runtime/cmake/find_metrics.cmake b/driver/intel-compute-runtime/cmake/find_metrics.cmake
+index 89445229b..b02968524 100644
+--- a/driver/intel-compute-runtime/cmake/find_metrics.cmake
++++ b/driver/intel-compute-runtime/cmake/find_metrics.cmake
+@@ -78,7 +78,7 @@ if(NOT NEO__METRICS_LIBRARY_INCLUDE_DIR STREQUAL "")
+ endif()
+ 
+ # Metrics Discovery Detection
+-dependency_detect("Metrics Discovery" "" METRICS_DISCOVERY "../metrics/discovery" TRUE)
++dependency_detect("Metrics Discovery" libmd METRICS_DISCOVERY "../metrics/discovery" TRUE)
+ if(NOT NEO__METRICS_DISCOVERY_INCLUDE_DIR STREQUAL "")
+   include_directories("${NEO__METRICS_DISCOVERY_INCLUDE_DIR}")
+ endif()
+-- 
+2.35.3
+

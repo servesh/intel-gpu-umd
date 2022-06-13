@@ -1,0 +1,51 @@
+[submodule "compiler/igc"]
+	path = compiler/igc
+	url = https://github.com/intel/intel-graphics-compiler.git
+[submodule "compiler/SPIRV-Tools"]
+	path = compiler/SPIRV-Tools
+	url = https://github.com/KhronosGroup/SPIRV-Tools.git
+[submodule "compiler/SPIRV-Headers"]
+	path = compiler/SPIRV-Headers
+	url = https://github.com/KhronosGroup/SPIRV-Headers.git
+[submodule "compiler/vc-intrinsics"]
+	path = compiler/vc-intrinsics
+	url = https://github.com/intel/vc-intrinsics.git
+[submodule "driver/intel-compute-runtime"]
+	path = driver/intel-compute-runtime
+	url = https://github.com/intel/compute-runtime.git
+[submodule "driver/gmmlib"]
+	path = driver/gmmlib
+	url = https://github.com/intel/gmmlib.git
+[submodule "driver/level-zero-loader"]
+	path = driver/level-zero-loader
+	url = https://github.com/oneapi-src/level-zero.git
+[submodule "driver/metrics-discovery"]
+	path = driver/metrics-discovery
+	url = https://github.com/intel/metrics-discovery.git
+[submodule "driver/metrics-library"]
+	path = driver/metrics-library
+	url = https://github.com/intel/metrics-library.git
+[submodule "driver/OpenCL-Headers"]
+	path = driver/OpenCL-Headers
+	url = https://github.com/KhronosGroup/OpenCL-Headers.git
+[submodule "driver/OpenCL-CLHPP"]
+	path = driver/OpenCL-CLHPP
+	url = https://github.com/KhronosGroup/OpenCL-CLHPP.git
+[submodule "driver/OpenCL-ICD-Loader"]
+	path = driver/OpenCL-ICD-Loader
+	url = https://github.com/KhronosGroup/OpenCL-ICD-Loader.git
+[submodule "compiler/llvm-project-stage"]
+	path = compiler/llvm-project-stage
+	url = https://github.com/llvm/llvm-project.git
+[submodule "compiler/SPIRV-LLVM-Translator-stage"]
+	path = compiler/SPIRV-LLVM-Translator-stage
+	url = https://github.com/KhronosGroup/SPIRV-LLVM-Translator.git
+[submodule "compiler/opencl-clang-stage"]
+	path = compiler/opencl-clang-stage
+	url = https://github.com/intel/opencl-clang.git
+[submodule "driver/metee"]
+	path = driver/metee
+	url = https://github.com/intel/metee.git
+[submodule "driver/igsc"]
+	path = driver/igsc
+	url = https://github.com/intel/igsc.git
