@@ -213,6 +213,7 @@ update_readme()
 		git remote -v |& grep fetch; echo' |& awk 'BEGIN { RS = ""; FS="\n" } { print $2 " - " $3 }' |& awk '{printf "| %21s | %61-s |\n", $1, $4}' )
 	echo -e "$GIT_INFO" | while read N_LN; do	((LN++));	F_OUT[ $LN, 0 ]="$N_LN"; F_OUT[ $LN, 1 ]=""; done
 
+	cd $SOURCES_DIR
 	rm README.md
 	for(( i = 1; i <= $LN; i++ ))
 	do
@@ -222,8 +223,8 @@ update_readme()
 	shopt -u lastpipe
 }
 
-load_build_env
-build_compiler
-build_runtime
-generate_module_files
+#load_build_env
+#build_compiler
+#build_runtime
+#generate_module_files
 update_readme
