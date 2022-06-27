@@ -223,8 +223,8 @@ update_readme()
 	shopt -u lastpipe
 }
 
-#load_build_env
-#build_compiler
-#build_runtime
-#generate_module_files
+load_build_env
+build_compiler
+build_runtime
+generate_module_files
 update_readme
