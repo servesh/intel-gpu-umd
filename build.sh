@@ -55,6 +55,7 @@ clean_sources()
 	cd $SOURCES_DIR
 	git submodule deinit -f .
 	git submodule update --init --recursive
+	rm -rf compiler/llvm-project
 }
 
 build_compiler()
@@ -62,7 +63,7 @@ build_compiler()
 	#Need to clone with entire repo's history, since the IGC build uses git history for patching
 	#Stage directories are ignored for build sources
 	cd $SOURCES_DIR/compiler
-	rm -rf llvm-project &> /dev/null
+	rm -rf llvm-project
 	git clone -l llvm-project-stage llvm-project
 	git clone -l SPIRV-LLVM-Translator-stage llvm-project/llvm/projects/llvm-spirv
 	git clone -l opencl-clang-stage llvm-project/llvm/projects/opencl-clang
@@ -90,11 +91,11 @@ build_runtime()
 	RUNTIME_DEPS=("gmmlib" "metrics-discovery" "metrics-library" "level-zero-loader" "metee" "igsc")
 	for COMPONENT_DIR in ${RUNTIME_DEPS[@]}; do
 		rm -rf $DRIVER_BUILD_DIR
-	 set -o xtrace
+		set -o xtrace
 		cmake -DCMAKE_BUILD_TYPE=$BUILDTYP -DCMAKE_INSTALL_PREFIX=$CODE_DEPLOY_DIR/driver -S ./$COMPONENT_DIR -B $DRIVER_BUILD_DIR -G Ninja -Wno-dev
 		cmake --build $DRIVER_BUILD_DIR --parallel $NPROC
 		cmake --install $DRIVER_BUILD_DIR
-	 set +o xtrace
+		set +o xtrace
 	done
 
 	rm -rf $DRIVER_BUILD_DIR
@@ -110,6 +111,8 @@ build_runtime()
 	cmake --install $DRIVER_BUILD_DIR
 	set +o xtrace
 	rm -rf $DRIVER_BUILD_DIR
+
+	git apply -Rv $SOURCES_DIR/patches/driver/*
 }
 
 generate_module_files()
@@ -223,18 +226,99 @@ update_readme()
 	echo -e "$GIT_INFO" | while read N_LN; do	((LN++));	F_OUT[ $LN, 0 ]="$N_LN"; F_OUT[ $LN, 1 ]=""; done
 
 	cd $SOURCES_DIR
-	rm README.md
+	if [[ $1 == README ]]
+	then
+		rm -f README.md
+	fi
+
 	for(( i = 1; i <= $LN; i++ ))
 	do
-		printf "${F_OUT[ $i, 1 ]}%s\n" "${F_OUT[ $i, 0 ]}" &>> README.md
+		if [[ $1 == README ]]
+		then
+			printf "${F_OUT[ $i, 1 ]}%s\n" "${F_OUT[ $i, 0 ]}" &>> README.md
+		else
+			printf "${F_OUT[ $i, 1 ]}%s\n" "${F_OUT[ $i, 0 ]}" &>> /dev/stdout
+		fi
 	done
 	set -m
 	shopt -u lastpipe
 }
 
-clean_sources
-load_build_env
-build_compiler
-build_runtime
-generate_module_files
-update_readme
+help_message()
+{
+	echo "build.sh <opt>"
+	echo " -h : Display this message"
+	echo " -b : Build"
+	echo " -r : Generate readme file of current submodule sources"
+	echo " -c : Clean submodules to default commits"
+	echo " -o : Set build type to Release or RelWithDebInfo"
+	echo "Example - Build/with clean sources"
+	echo "./build.sh -cb"
+}
+
+NUMARGS=$#
+if [ $NUMARGS -eq 0 ]; then
+  help_message
+fi
+
+BUILD_SOURCES=0
+GENERATE_README=0
+GENERATE_MODULES=0
+CLEAN_SOURCES=0
+
+while getopts ":brmcoh" OPTION; do
+	case $OPTION in
+		h)
+			help_message
+			exit 0
+			;;
+		b)
+			BUILD_SOURCES=1
+			;;
+		r)
+			GENERATE_README=1
+			;;
+		m)
+			GENERATE_MODULES=1
+			;;
+		c)
+			CLEAN_SOURCES=1
+			;;
+		o)
+			BUILDTYP=$OPTARG
+			if [[ ! $BUILDTYP =~ Release|RelWithDebInfo ]]; then
+				echo "Incorrect options provided"
+				exit 1
+			fi
+			;;
+		*)
+			echo "Incorrect options provided"
+			help_message
+			exit 1
+			;;
+	esac
+done
+shift $((OPTIND-1))
+
+if [[ $CLEAN_SOURCES == 1 ]]; then
+	echo "Cleaning all submodules directories to default commit..."
+	clean_sources
+fi
+
+if [[ $BUILD_SOURCES == 1 ]]; then
+	echo "Building Intel GPU UMD Stack..."
+	update_readme
+	load_build_env
+	build_compiler
+	build_runtime
+fi
+
+if [[ $GENERATE_MODULES == 1 ]]; then
+	echo "Generating module files at $MODULES_DEPLOY_DIR..."
+	generate_module_files
+fi
+
+if [[ $GENERATE_README == 1 ]]; then
+	echo "Generating new readme file..."
+	update_readme "README"
+fi
