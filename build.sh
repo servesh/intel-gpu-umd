@@ -50,6 +50,13 @@ DEPLOY_USER=$( cd $SOURCES_DIR; git show -s --format='%cn' )
 DEPLOY_EMAIL=$( cd $SOURCES_DIR; git show -s --format='%ce' )
 CODE_DEPLOY_DIR=$CODE_DEPLOY_DIR/$DEPLOY_COMMIT-$BUILD_DATE
 
+clean_sources()
+{
+	cd $SOURCES_DIR
+	git submodule deinit -f .
+	git submodule update --init --recursive
+}
+
 build_compiler()
 {
 	#Need to clone with entire repo's history, since the IGC build uses git history for patching
@@ -68,6 +75,7 @@ build_compiler()
 	set +o xtrace
 	cd ..
 	rm -rf $COMPILER_BUILD_DIR
+	rm -rf llvm-project
 }
 
 build_runtime()
@@ -190,6 +198,7 @@ generate_module_files()
 	((LN++)); MOD_OUT[ $LN, 0 ]="prepend-path {CMAKE_PREFIX_PATH} \"$CODE_DEPLOY_DIR/driver\"";																											MOD_OUT[ $LN, 1 ]="";
 	((LN++)); MOD_OUT[ $LN, 0 ]="prepend-path {CMAKE_PREFIX_PATH} \"$CODE_DEPLOY_DIR/compiler\"";																										MOD_OUT[ $LN, 1 ]="";
 
+	[ ! -d "$MODULE_DEPLOY_DIR" ] && mkdir -p $MODULE_DEPLOY_DIR
 	for(( i = 1; i <= $LN; i++ ))
 	do
 		printf "${MOD_OUT[ $i, 1 ]}%s\n" "${MOD_OUT[ $i, 0 ]}" &>> $MODULE_DEPLOY_DIR/$BUILD_DATE-$DEPLOY_COMMIT
@@ -223,6 +232,7 @@ update_readme()
 	shopt -u lastpipe
 }
 
+clean_sources
 load_build_env
 build_compiler
 build_runtime
