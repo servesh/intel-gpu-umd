@@ -20,24 +20,28 @@ BUILDTYP="Release"
 
 load_build_env()
 {
-  ml purge
-  for i in ${!MODULE_LOCATIONS[@]}; do
-    if [[ -d "${MODULE_LOCATIONS[i]}" ]]; then
-      ml use ${MODULE_LOCATIONS[i]};
-    else
-      echo "Warning: Module location ${MODULE_LOCATIONS[i]} is not found in $HOST"
-    fi
-  done
+  if ! command -v module &> /dev/null
+  then
+    echo "Warning: Module is not installed, so using system default env"
+  else
+    module purge
+    for i in ${!MODULE_LOCATIONS[@]}; do
+      if [[ -d "${MODULE_LOCATIONS[i]}" ]]; then
+        module use ${MODULE_LOCATIONS[i]};
+      else
+        echo "Warning: Module location ${MODULE_LOCATIONS[i]} is not found in $HOST"
+      fi
+    done
 
-  for i in ${!MODULES[@]}; do
-    if [[ -n "$(ml av ${MODULES[i]} | grep ${MODULES[i]} &> /dev/null; echo $?)" ]]; then
-      ml ${MODULES[i]};
-    else
-      echo "Warning: Module ${MODULES[i]} is not found in $HOST"
-    fi
-  done
-
-  ml -t
+    for i in ${!MODULES[@]}; do
+      if [[ -n "$(ml av -t ${MODULES[i]})" ]]; then
+        module load ${MODULES[i]};
+      else
+        echo "Warning: Module ${MODULES[i]} is not found in $HOST"
+      fi
+    done
+    module list -t
+  fi
 }
 
 COMPILER_BUILD_DIR=$(mktemp -d -t compiler.build.$DATE.XXXXXXXXXX)
