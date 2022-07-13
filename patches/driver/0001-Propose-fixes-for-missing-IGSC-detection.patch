@@ -1,20 +1,8 @@
-From 87963ddc2e4923324463fa45b4cee030446f8b53 Mon Sep 17 00:00:00 2001
-From: Servesh Muralidharan <servesh@anl.gov>
-Date: Mon, 6 Jun 2022 16:28:36 -0500
-Subject: [PATCH 1/2] Propose fixes for missing IGSC detection
-
----
- CMakeLists.txt            |  3 +++
- cmake/find_igsc.cmake     | 38 +++++++++++++++++++++++++++++++++++++
- level_zero/CMakeLists.txt | 40 +++++++++++++++++++--------------------
- 3 files changed, 61 insertions(+), 20 deletions(-)
- create mode 100644 cmake/find_igsc.cmake
-
 diff --git a/driver/intel-compute-runtime/CMakeLists.txt b/driver/intel-compute-runtime/CMakeLists.txt
-index 9beb10d8e..ba24b9bfc 100644
+index d5135b904..8055ee519 100644
 --- a/driver/intel-compute-runtime/CMakeLists.txt
 +++ b/driver/intel-compute-runtime/CMakeLists.txt
-@@ -375,6 +375,9 @@ include(cmake/find_gmmlib.cmake)
+@@ -382,6 +382,9 @@ include(cmake/find_gmmlib.cmake)
  # Metrics detection
  include(cmake/find_metrics.cmake)
  
@@ -69,56 +57,49 @@ index 000000000..10b9b61da
 +  # Windows
 +endif()
 diff --git a/driver/intel-compute-runtime/level_zero/CMakeLists.txt b/driver/intel-compute-runtime/level_zero/CMakeLists.txt
-index 59228574c..f99410e9e 100644
+index f7e5933a5..05c158fa4 100644
 --- a/driver/intel-compute-runtime/level_zero/CMakeLists.txt
 +++ b/driver/intel-compute-runtime/level_zero/CMakeLists.txt
-@@ -75,26 +75,26 @@ if(BUILD_WITH_L0)
+@@ -75,24 +75,24 @@ if(BUILD_WITH_L0)
      endif()
    endif()
  
--  if(UNIX)
--    # Firmware Update Library
--    get_filename_component(IGSC_DIR_tmp "${NEO_SOURCE_DIR}/../igsc" ABSOLUTE)
--    if(EXISTS "${IGSC_DIR_tmp}/lib/cmake")
--      find_package(igsc HINTS "${IGSC_DIR_tmp}/lib/cmake")
--    else()
--      find_package(igsc)
--    endif()
--    if(igsc_FOUND)
--      add_definitions(-DIGSC_PRESENT=1)
--      if(EXISTS "${IGSC_DIR_tmp}/lib/cmake")
--        get_filename_component(igsc_INCLUDE_DIR "${NEO_SOURCE_DIR}/../igsc/include" ABSOLUTE)
--      endif()
--      message(STATUS "igsc Library headers directory: ${igsc_INCLUDE_DIR}")
--      message(STATUS "igsc version: ${igsc_VERSION}")
--      include_directories(SYSTEM ${igsc_INCLUDE_DIR})
--    else()
--      message(STATUS "igsc Library headers not available. Building without")
--    endif()
+-  # Firmware Update Library
+-  get_filename_component(IGSC_DIR_tmp "${NEO_SOURCE_DIR}/../igsc" ABSOLUTE)
+-  if(EXISTS "${IGSC_DIR_tmp}/lib/cmake")
+-    find_package(igsc HINTS "${IGSC_DIR_tmp}/lib/cmake")
+-  else()
+-    find_package(igsc)
 -  endif()
-+  #if(UNIX___11)
-+  #  # Firmware Update Library
-+  #  get_filename_component(IGSC_DIR_tmp "${NEO_SOURCE_DIR}/../igsc" ABSOLUTE)
+-  if(igsc_FOUND)
+-    add_definitions(-DIGSC_PRESENT=1)
+-    if(EXISTS "${IGSC_DIR_tmp}/lib/cmake")
+-      get_filename_component(igsc_INCLUDE_DIR "${NEO_SOURCE_DIR}/../igsc/include" ABSOLUTE)
+-    endif()
+-    message(STATUS "igsc Library headers directory: ${igsc_INCLUDE_DIR}")
+-    message(STATUS "igsc version: ${igsc_VERSION}")
+-    include_directories(SYSTEM ${igsc_INCLUDE_DIR})
+-  else()
+-    message(STATUS "igsc Library headers not available. Building without")
+-  endif()
++  ## Firmware Update Library
++  #get_filename_component(IGSC_DIR_tmp "${NEO_SOURCE_DIR}/../igsc" ABSOLUTE)
++  #if(EXISTS "${IGSC_DIR_tmp}/lib/cmake")
++  #  find_package(igsc HINTS "${IGSC_DIR_tmp}/lib/cmake")
++  #else()
++  #  find_package(igsc)
++  #endif()
++  #if(igsc_FOUND)
++  #  add_definitions(-DIGSC_PRESENT=1)
 +  #  if(EXISTS "${IGSC_DIR_tmp}/lib/cmake")
-+  #    find_package(igsc HINTS "${IGSC_DIR_tmp}/lib/cmake")
-+  #  else()
-+  #    find_package(igsc)
++  #    get_filename_component(igsc_INCLUDE_DIR "${NEO_SOURCE_DIR}/../igsc/include" ABSOLUTE)
 +  #  endif()
-+  #  if(igsc_FOUND)
-+  #    add_definitions(-DIGSC_PRESENT=1)
-+  #    if(EXISTS "${IGSC_DIR_tmp}/lib/cmake")
-+  #      get_filename_component(igsc_INCLUDE_DIR "${NEO_SOURCE_DIR}/../igsc/include" ABSOLUTE)
-+  #    endif()
-+  #    message(STATUS "igsc Library headers directory: ${igsc_INCLUDE_DIR}")
-+  #    message(STATUS "igsc version: ${igsc_VERSION}")
-+  #    include_directories(SYSTEM ${igsc_INCLUDE_DIR})
-+  #  else()
-+  #    message(STATUS "igsc Library headers not available. Building without")
-+  #  endif()
++  #  message(STATUS "igsc Library headers directory: ${igsc_INCLUDE_DIR}")
++  #  message(STATUS "igsc version: ${igsc_VERSION}")
++  #  include_directories(SYSTEM ${igsc_INCLUDE_DIR})
++  #else()
++  #  message(STATUS "igsc Library headers not available. Building without")
 +  #endif()
  
    if(UNIX)
      # Load GNUInstallDirs to determine install targets for Linux packages
--- 
-2.35.3
-
