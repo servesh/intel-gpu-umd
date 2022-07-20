@@ -69,9 +69,9 @@ build_compiler()
   #Stage directories are ignored for build sources
   cd $SOURCES_DIR/compiler
   rm -rf llvm-project
-  git clone -l llvm-project-stage llvm-project
-  git clone -l SPIRV-LLVM-Translator-stage llvm-project/llvm/projects/llvm-spirv
-  git clone -l opencl-clang-stage llvm-project/llvm/projects/opencl-clang
+  git clone -l --no-hardlinks llvm-project-stage llvm-project
+  git clone -l --no-hardlinks SPIRV-LLVM-Translator-stage llvm-project/llvm/projects/llvm-spirv
+  git clone -l --no-hardlinks opencl-clang-stage llvm-project/llvm/projects/opencl-clang
 
   rm -rf $COMPILER_BUILD_DIR
   set -o xtrace
@@ -84,7 +84,7 @@ build_compiler()
   rm -rf llvm-project
 }
 
-build_runtime()
+build_driver()
 {
   cd $SOURCES_DIR/driver
   export INCLUDE=$CODE_DEPLOY_DIR/driver/include:$INCLUDE
@@ -249,14 +249,23 @@ update_readme()
   shopt -u lastpipe
 }
 
+view_current_config()
+{
+  cd $SOURCES_DIR;
+  git submodule foreach 'git describe --exact-match --tags 2> /dev/null || git rev-parse --short HEAD; \
+    git remote -v |& grep fetch; echo' |& awk 'BEGIN { RS = ""; FS="\n" } { print $2 " - " $3 }' |& awk '{printf "%21s | %61-s\n", $1, $4}' 
+}
+
 help_message()
 {
   echo "build.sh <opt>"
   echo " -h : Display this message"
-  echo " -b : Build"
+  echo " -b : Build current config"
   echo " -r : Generate readme file of current submodule sources"
   echo " -c : Clean submodules to default commits"
   echo " -o : Set build type to Release or RelWithDebInfo"
+  echo " -a : Display current build config"
+  echo " -m : Install modules"
   echo "Example - Build/with clean sources"
   echo "./build.sh -cb"
 }
@@ -271,7 +280,7 @@ GENERATE_README=0
 GENERATE_MODULES=0
 CLEAN_SOURCES=0
 
-while getopts ":brmcoh" OPTION; do
+while getopts ":brmcoha" OPTION; do
   case $OPTION in
     h)
       help_message
@@ -288,6 +297,10 @@ while getopts ":brmcoh" OPTION; do
       ;;
     c)
       CLEAN_SOURCES=1
+      ;;
+    a)
+      view_current_config
+      exit 0
       ;;
     o)
       BUILDTYP=$OPTARG
@@ -312,14 +325,13 @@ fi
 
 if [[ $BUILD_SOURCES == 1 ]]; then
   echo "Building Intel GPU UMD Stack..."
-  update_readme
   load_build_env
-  build_compiler
-  build_runtime
+  build_compiler |& tee /tmp/$DEPLOY_COMMIT-$BUILD_DATE-compiler-build.log
+  build_driver |& tee /tmp/$DEPLOY_COMMIT-$BUILD_DATE-driver-build.log
 fi
 
 if [[ $GENERATE_MODULES == 1 ]]; then
-  echo "Generating module files at $MODULES_DEPLOY_DIR..."
+  echo "Generating module files at $MODULE_DEPLOY_DIR"
   generate_module_files
 fi
 
