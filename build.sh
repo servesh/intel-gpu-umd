@@ -48,6 +48,11 @@ load_build_env()
     export CC=clang
     export CXX=clang++
   fi
+
+  #Enable debug symbols to be added to built libs
+  if [[ $DEBUG_SYMS == True ]]; then
+    EXTRA_CMAKE_OPTIONS="-DCMAKE_CXX_FLAGS="-g" -DCMAKE_C_FLAGS="-g""
+  fi
 }
 
 COMPILER_BUILD_DIR=$(mktemp -d -t compiler.build.$DATE.XXXXXXXXXX)
@@ -81,7 +86,7 @@ build_compiler()
 
   rm -rf $COMPILER_BUILD_DIR
   set -o xtrace
-  cmake -DCMAKE_BUILD_TYPE=$BUILDTYP -DCMAKE_INSTALL_PREFIX=$CODE_DEPLOY_DIR/compiler -DIGC_OPTION__LLVM_PREFERRED_VERSION=11.1.0 -S ./igc/IGC -B $COMPILER_BUILD_DIR -G Ninja -Wno-dev
+  cmake -DCMAKE_BUILD_TYPE=$BUILDTYP -DCMAKE_INSTALL_PREFIX=$CODE_DEPLOY_DIR/compiler -DIGC_OPTION__LLVM_PREFERRED_VERSION=11.1.0 -S ./igc/IGC -B $COMPILER_BUILD_DIR -G Ninja -Wno-dev $EXTRA_CMAKE_OPTIONS
   cmake --build $COMPILER_BUILD_DIR --parallel $NPROC
   cmake --install $COMPILER_BUILD_DIR
   set +o xtrace
@@ -97,33 +102,39 @@ build_driver()
   export CMAKE_PREFIX_PATH=$CODE_DEPLOY_DIR/driver/share/cmake:$CODE_DEPLOY_DIR/driver/share:$CODE_DEPLOY_DIR/driver/lib/cmake:$CODE_DEPLOY_DIR/driver/lib:$CODE_DEPLOY_DIR/driver/lib64/cmake:$CODE_DEPLOY_DIR/driver/lib64:$CMAKE_PREFIX_PATH
   export LD_LIBRARY_PATH=$CODE_DEPLOY_DIR/driver/lib64:$LD_LIBRARY_PATH
   export PKG_CONFIG_PATH=$CODE_DEPLOY_DIR/driver/lib64/pkgconfig:$PKG_CONFIG_PATH
-  git apply -v $SOURCES_DIR/patches/driver/*
+  
+  if [[ ! $( git apply --check $SOURCES_DIR/patches/driver/* &> /dev/null; echo $? ) ]]; then
+    git apply -v $SOURCES_DIR/patches/driver/*
+  fi
+
   set -o xtrace
   RUNTIME_DEPS=("gmmlib" "metrics-discovery" "metrics-library" "level-zero-loader" "metee" "igsc")
   for COMPONENT_DIR in ${RUNTIME_DEPS[@]}; do
     rm -rf $DRIVER_BUILD_DIR
     set -o xtrace
-    cmake -DCMAKE_BUILD_TYPE=$BUILDTYP -DCMAKE_INSTALL_PREFIX=$CODE_DEPLOY_DIR/driver -S ./$COMPONENT_DIR -B $DRIVER_BUILD_DIR -G Ninja -Wno-dev
+    cmake -DCMAKE_BUILD_TYPE=$BUILDTYP -DCMAKE_INSTALL_PREFIX=$CODE_DEPLOY_DIR/driver -S ./$COMPONENT_DIR -B $DRIVER_BUILD_DIR -G Ninja -Wno-dev $EXTRA_CMAKE_OPTIONS
     cmake --build $DRIVER_BUILD_DIR --parallel $NPROC
     cmake --install $DRIVER_BUILD_DIR
     set +o xtrace
   done
 
   rm -rf $DRIVER_BUILD_DIR
-  cmake -DCMAKE_BUILD_TYPE=$BUILDTYP -DCMAKE_INSTALL_PREFIX=$CODE_DEPLOY_DIR/driver -DIGC_DIR=$CODE_DEPLOY_DIR/compiler -DLEVEL_ZERO_ROOT=$CODE_DEPLOY_DIR/driver -DLevelZero_INCLUDE_DIR=$CODE_DEPLOY_DIR/driver/include -DMETRICS_DISCOVERY_DIR=$CODE_DEPLOY_DIR/driver -DMETRICS_LIBRARY_DIR=$CODE_DEPLOY_DIR/driver -DGMM_DIR=$CODE_DEPLOY_DIR/driver -DIGSC_DIR=$CODE_DEPLOY_DIR/driver -DOCL_ICD_VENDORDIR=$CODE_DEPLOY_DIR/OpenCL/vendor -DNEO_ENABLE_i915_PRELIM_DETECTION=ON -DSUPPORT_XE_HP_CORE=ON -DSUPPORT_XE_HP_SDV=ON -DSUPPORT_PVC=ON -DNEO_SKIP_UNIT_TESTS=OFF -S ./intel-compute-runtime -B $DRIVER_BUILD_DIR -G Ninja -Wno-dev
+  cmake -DCMAKE_BUILD_TYPE=$BUILDTYP -DCMAKE_INSTALL_PREFIX=$CODE_DEPLOY_DIR/driver -DIGC_DIR=$CODE_DEPLOY_DIR/compiler -DLEVEL_ZERO_ROOT=$CODE_DEPLOY_DIR/driver -DLevelZero_INCLUDE_DIR=$CODE_DEPLOY_DIR/driver/include -DMETRICS_DISCOVERY_DIR=$CODE_DEPLOY_DIR/driver -DMETRICS_LIBRARY_DIR=$CODE_DEPLOY_DIR/driver -DGMM_DIR=$CODE_DEPLOY_DIR/driver -DIGSC_DIR=$CODE_DEPLOY_DIR/driver -DOCL_ICD_VENDORDIR=$CODE_DEPLOY_DIR/OpenCL/vendor -DNEO_ENABLE_i915_PRELIM_DETECTION=ON -DSUPPORT_XE_HP_CORE=ON -DSUPPORT_XE_HP_SDV=ON -DSUPPORT_PVC=ON -DNEO_SKIP_UNIT_TESTS=OFF -S ./intel-compute-runtime -B $DRIVER_BUILD_DIR -G Ninja -Wno-dev $EXTRA_CMAKE_OPTIONS
   cmake --build $DRIVER_BUILD_DIR --parallel $NPROC
   cmake --install $DRIVER_BUILD_DIR
 
   rsync -aP OpenCL-Headers/CL $CODE_DEPLOY_DIR/driver/include/
   rsync -aP OpenCL-CLHPP/include/CL/cl2.hpp OpenCL-CLHPP/include/CL/opencl.hpp $CODE_DEPLOY_DIR/driver/include/CL/
   rm -rf $DRIVER_BUILD_DIR
-  cmake -DCMAKE_BUILD_TYPE=$BUILDTYP -DCMAKE_INSTALL_PREFIX=$CODE_DEPLOY_DIR/driver -DOPENCL_ICD_LOADER_HEADERS_DIR=$CODE_DEPLOY_DIR/driver/include -S ./OpenCL-ICD-Loader -B $DRIVER_BUILD_DIR -G Ninja -Wno-dev
+  cmake -DCMAKE_BUILD_TYPE=$BUILDTYP -DCMAKE_INSTALL_PREFIX=$CODE_DEPLOY_DIR/driver -DOPENCL_ICD_LOADER_HEADERS_DIR=$CODE_DEPLOY_DIR/driver/include -S ./OpenCL-ICD-Loader -B $DRIVER_BUILD_DIR -G Ninja -Wno-dev -DCMAKE_CXX_FLAGS="-g" -DCMAKE_C_FLAGS="-g"
   cmake --build $DRIVER_BUILD_DIR --parallel $NPROC
   cmake --install $DRIVER_BUILD_DIR
   set +o xtrace
   rm -rf $DRIVER_BUILD_DIR
 
-  git apply -Rv $SOURCES_DIR/patches/driver/*
+  if [[ ! $( git apply --check -R $SOURCES_DIR/patches/driver/* &> /dev/null; echo $? ) ]]; then
+    git apply -Rv $SOURCES_DIR/patches/driver/*
+  fi
 }
 
 generate_module_files()
@@ -234,7 +245,7 @@ update_readme()
   ((LN++)); F_OUT[ $LN, 0 ]=" -b : Build current config"                                                                                        F_OUT[ $LN, 1 ]=""; 
   ((LN++)); F_OUT[ $LN, 0 ]=" -r : Generate readme file of current submodule sources"                                                           F_OUT[ $LN, 1 ]=""; 
   ((LN++)); F_OUT[ $LN, 0 ]=" -c : Clean submodules to default commits"                                                                         F_OUT[ $LN, 1 ]=""; 
-  ((LN++)); F_OUT[ $LN, 0 ]=" -o : Set build type to Release or RelWithDebInfo"                                                                 F_OUT[ $LN, 1 ]=""; 
+  ((LN++)); F_OUT[ $LN, 0 ]=" -d : Enable debug symbols in the libraries built"                                                                 F_OUT[ $LN, 1 ]=""; 
   ((LN++)); F_OUT[ $LN, 0 ]=" -a : Display current build config"                                                                                F_OUT[ $LN, 1 ]=""; 
   ((LN++)); F_OUT[ $LN, 0 ]=" -m : Install modules"                                                                                             F_OUT[ $LN, 1 ]=""; 
   ((LN++)); F_OUT[ $LN, 0 ]=" -p : Select compiler gcc or llvm"                                                                                 F_OUT[ $LN, 1 ]=""; 
@@ -287,7 +298,7 @@ help_message()
   echo " -b : Build current config"
   echo " -r : Generate readme file of current submodule sources"
   echo " -c : Clean submodules to default commits"
-  echo " -o : Set build type to Release or RelWithDebInfo"
+  echo " -d : Enable debug symbols in the libraries built"
   echo " -a : Display current build config"
   echo " -m : Install modules"
   echo " -p : Select compiler gcc or llvm"
@@ -304,8 +315,9 @@ BUILD_SOURCES=0
 GENERATE_README=0
 GENERATE_MODULES=0
 CLEAN_SOURCES=0
+DEBUG_SYMS=0
 
-while getopts ":brmco:hap:" OPTION; do
+while getopts ":brmcdhap:" OPTION; do
   case $OPTION in
     h)
       help_message
@@ -322,17 +334,14 @@ while getopts ":brmco:hap:" OPTION; do
       ;;
     c)
       CLEAN_SOURCES=1
+      echo "Enabling Debug symbols"
       ;;
     a)
       view_current_config
       exit 0
       ;;
-    o)
-      BUILDTYP=$OPTARG
-      if [[ ! $BUILDTYP =~ Release|RelWithDebInfo ]]; then
-        echo "Incorrect options provided"
-        exit 1
-      fi
+    d)
+      DEBUG_SYMS=1
       ;;
     p)
       COMPILER=$OPTARG

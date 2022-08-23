@@ -6,7 +6,7 @@ foo@bar:~$./build.sh -h
  -b : Build current config
  -r : Generate readme file of current submodule sources
  -c : Clean submodules to default commits
- -o : Set build type to Release or RelWithDebInfo
+ -d : Enable debug symbols in the libraries built
  -a : Display current build config
  -m : Install modules
  -p : Select compiler gcc or llvm
@@ -21,17 +21,17 @@ foo@bar:~$./build.sh -b
 |         sdk-1.3.204.0 | https://github.com/KhronosGroup/SPIRV-Headers.git             |
 |              a31ffaee | https://github.com/KhronosGroup/SPIRV-LLVM-Translator.git     |
 |         sdk-1.3.204.0 | https://github.com/KhronosGroup/SPIRV-Tools.git               |
-|         igc-1.0.11485 | https://github.com/intel/intel-graphics-compiler.git          |
+|       igc-1.0.11702.1 | https://github.com/intel/intel-graphics-compiler.git          |
 |        llvmorg-11.1.0 | https://github.com/llvm/llvm-project.git                      |
 |               363a526 | https://github.com/intel/opencl-clang.git                     |
-|                v0.4.2 | https://github.com/intel/vc-intrinsics.git                    |
+|                v0.5.0 | https://github.com/intel/vc-intrinsics.git                    |
 |           v2022.05.18 | https://github.com/KhronosGroup/OpenCL-CLHPP.git              |
 |           v2022.05.18 | https://github.com/KhronosGroup/OpenCL-Headers.git            |
 |               5b280f6 | https://github.com/KhronosGroup/OpenCL-ICD-Loader.git         |
-|   intel-gmmlib-22.1.5 | https://github.com/intel/gmmlib.git                           |
-|                V0.8.0 | https://github.com/intel/igsc.git                             |
-|           22.27.23681 | https://github.com/intel/compute-runtime.git                  |
-|                v1.8.1 | https://github.com/oneapi-src/level-zero.git                  |
+|   intel-gmmlib-22.1.7 | https://github.com/intel/gmmlib.git                           |
+|                V0.8.4 | https://github.com/intel/igsc.git                             |
+|           22.33.23949 | https://github.com/intel/compute-runtime.git                  |
+|                v1.8.5 | https://github.com/oneapi-src/level-zero.git                  |
 |                 3.1.3 | https://github.com/intel/metee.git                            |
-|               0c13dd2 | https://github.com/intel/metrics-discovery.git                |
-|               03976e9 | https://github.com/intel/metrics-library.git                  |
+|               d1862be | https://github.com/intel/metrics-discovery.git                |
+|               755fd22 | https://github.com/intel/metrics-library.git                  |
