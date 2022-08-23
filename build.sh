@@ -50,7 +50,7 @@ load_build_env()
   fi
 
   #Enable debug symbols to be added to built libs
-  if [[ $DEBUG_SYMS == True ]]; then
+  if [[ $DEBUG_SYMS == 1 ]]; then
     EXTRA_CMAKE_OPTIONS="-DCMAKE_CXX_FLAGS="-g" -DCMAKE_C_FLAGS="-g""
   fi
 }
@@ -334,24 +334,25 @@ while getopts ":brmcdhap:" OPTION; do
       ;;
     c)
       CLEAN_SOURCES=1
-      echo "Enabling Debug symbols"
       ;;
     a)
       view_current_config
       exit 0
       ;;
     d)
+      echo "Enabling Debug symbols..."
       DEBUG_SYMS=1
       ;;
     p)
       COMPILER=$OPTARG
       if [[ ! $COMPILER =~ gcc|llvm ]]; then
-        echo "Incorrect options provided"
+        echo "Incorrect option provided!!!"
+        help_message
         exit 1
       fi
       ;;
     *)
-      echo "Incorrect options provided"
+      echo "Incorrect options provided!!!"
       help_message
       exit 1
       ;;
